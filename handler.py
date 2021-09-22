@@ -40,7 +40,7 @@ class ModelHandler(object):
         assert self.samples is None, "Reset first"
         if return_sites is not None:
             assert 'obs' in return_sites, "Dafuk you doin?"
-        predictive = Predictive(self.model, params=self.result.params, num_samples=n_samples, return_sites=return_sites)
+        predictive = Predictive(self.model, guide=self.guide, params=self.result.params, num_samples=n_samples, return_sites=return_sites)
         self.samples = predictive(self.rng, *data)
 
     def run_mcmc(self, *data, n_warm=500, n_iter=1000, n_chains=1, nuts=True):
