@@ -33,7 +33,7 @@ class ModelHandler(object):
         assert self.guide is not None
         assert self.svi is None, "Reset first"
         self.svi = SVI(self.model, self.guide, self.optim(step_size), self.loss(n_particles))
-        self.result = self.svi(self.rng, n_iter, *data)
+        self.result = self.svi.run(self.rng, n_iter, *data)
 
     def sample_svi(self, *data, n_samples=1000, return_sites=None):
         assert self.svi is not None
