@@ -7,6 +7,7 @@ from scipy.linalg import cho_solve, cho_factor
 import numpy as np
 
 from jax import vmap
+import jax.numpy as jnp
 
 def kernel(X, Z, var, length, noise, jitter=1e-10, include_noise=True):
     norm = ((X[:, None] - Z)**2).sum(axis=2) #needs at least one d >= 2
@@ -20,7 +21,7 @@ def model(X, y=None):
     log_length = numpyro.sample('llength', dist.Normal(0., 10.))
     log_noise = numpyro.sample('lnoise', dist.Normal(0., 10.))
     
-    C = kernel(X, X, np.exp(log_var), np.exp(log_length), np.exp(log_noise))
+    C = kernel(X, X, jnp.exp(log_var), jnp.exp(log_length), jnp.exp(log_noise))
     
     numpyro.sample(
         'obs',
@@ -35,7 +36,7 @@ def model_log(X, y=None):
     log_length = numpyro.sample('llength', dist.Normal(0., 10.))
     log_noise = numpyro.sample('lnoise', dist.Normal(0., 10.))
     
-    C = kernel(X, X, np.exp(log_var), np.exp(log_length), np.exp(log_noise))
+    C = kernel(X, X, jnp.exp(log_var), jnp.exp(log_length), jnp.exp(log_noise))
     
     numpyro.sample(
         'obs',
