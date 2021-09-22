@@ -11,9 +11,9 @@ import jax.numpy as jnp
 
 def kernel(X, Z, var, length, noise, jitter=1e-10, include_noise=True):
     norm = ((X[:, None] - Z)**2).sum(axis=2) #needs at least one d >= 2
-    k = var * np.exp(-.5 * norm / length)
+    k = var * jnp.exp(-.5 * norm / length)
     if include_noise:
-        k += (noise + jitter) * np.eye(X.shape[0])
+        k += (noise + jitter) * jnp.eye(X.shape[0])
     return k
 
 def model(X, y=None):
