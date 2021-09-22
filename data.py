@@ -68,4 +68,4 @@ def preprocess(df_train, logX=True, shiftX=True, scaleX=True, logy=True, shifty=
     if not shifty and logy:
         X = np.concatenate([np.ones((X.shape[0], 1)), X], axis=1)
 
-    return y, X, mean, sd
+    return y, X, mean, sd, df_train_['target'].values
