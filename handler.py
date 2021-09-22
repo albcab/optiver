@@ -69,7 +69,7 @@ class ModelHandler(object):
         if cpu:
             obs = device_put(self.samples['obs'], device=devices('cpu')[0])
         else:
-            obs = self.sample['obs']
+            obs = self.samples['obs']
         self.pred = np.mean(obs, axis=0) * sd + mean
         if log_scale:
             self.pred = np.exp(self.pred)
