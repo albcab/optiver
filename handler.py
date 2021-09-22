@@ -38,7 +38,8 @@ class ModelHandler(object):
     def sample_svi(self, *data, n_samples=1000, return_sites=None):
         assert self.svi is not None
         assert self.samples is None, "Reset first"
-        assert 'obs' in return_sites or return_sites is None, "Dafuk you doin?"
+        if return_sites is not None:
+            assert 'obs' in return_sites, "Dafuk you doin?"
         predictive = Predictive(self.model, params=self.result.params, num_samples=n_samples, return_sites=return_sites)
         self.samples = predictive(self.rng, *data)
 
@@ -57,7 +58,8 @@ class ModelHandler(object):
     def sample_mcmc(self, *data, return_sites=None):
         assert self.mcmc is not None
         assert self.samples is None, "Reset first"
-        assert 'obs' in return_sites or return_sites is None, "Dafuk you doin?"
+        if return_sites is not None:
+            assert 'obs' in return_sites, "Dafuk you doin?"
         predictive = Predictive(self.model, self.mcmc.get_samples(), return_sites=return_sites)
         self.samples = predictive(self.rng, *data)
 
