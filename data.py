@@ -52,10 +52,9 @@ def preprocess(df_train, logX=True, shiftX=True, scaleX=True, logy=True, shifty=
         for c in range(X.shape[1]):
             X[:, c] /= X[:, c].std()
 
+    y = df_train_['target'].values.copy()
     if logy:
         y = np.log(df_train_['target'].values)
-    else:
-        y = df_train_['target'].values
     
     mean, sd = 0., 1.
     if shifty:
