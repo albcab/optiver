@@ -8,7 +8,7 @@ import numpyro
 import numpyro.distributions as dist
 from numpyro.infer.reparam import TransformReparam
 
-from utils import realized_volatility
+from .utils import realized_volatility
 
 def exp_kernel_sec(t, m, var, length, noise, jitter=1e-6, include_noise=True):
     k = var * jnp.exp(-.5 * (jnp.expand_dims(t, axis=1) - m)**2 / length)
