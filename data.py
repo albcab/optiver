@@ -3,7 +3,44 @@
 import pandas as pd
 import numpy as np
 
+from jax import vmap
+
 from .utils import log_return, realized_volatility
+
+def build_log_return(book_file, fill=True, tot_sec=600):
+    """Build train for Gaussian processes on log returns"""
+    stock_id = book_file.split("=")[1]
+    book = pd.read_parquet(book_file)
+    book['wap'] = (book['bid_price1'] * book['ask_size1'] + book['ask_price1'] * book['bid_size1']
+                   ) / (book['bid_size1'] + book['ask_size1'])
+    book['log_return'] = book.groupby(['time_id'])['wap'].apply(log_return)
+    book = book[~book['log_return'].isnull()]
+        
+    if fill:
+        book_fill = []
+        new_index = pd.Index(np.arange(1, tot_sec), name='seconds_in_bucket')
+        for t in book['time_id'].unique():
+            bookt = book.loc[book['time_id'] == t, ['seconds_in_bucket', 'log_return']].set_index('seconds_in_bucket').reindex(new_index, fill_value=0).reset_index()
+            bookt['time_id'] = t
+            book_fill.append(bookt)
+        book = pd.concat(book_fill, ignore_index=True)
+        
+    book['stock_id'] = int(stock_id)
+    return book
+
+def build_time_array(df, unique_times, stock_id):
+    """Build array with dimension (time_ids, seconds_in_bucket)"""
+    def _build_array(time_id):
+        return df.loc[df.time_id == time_id and df.stock_id == stock_id, 'seconds in bucket'].values
+    return vmap(_build_array)(unique_times)
+
+def preprocess_log_return(df):
+    """Transform log returns so that each stock on each time has sd of 1, output original sd for prediction"""
+    std_dev = df.groupby(['stock_id', 'time_id'])['log_returns'].std().reset_index()
+    std_dev = std_dev.rename(columns={'log_returns': 'sd'})
+    sd = lambda r: r['log_return'] / std_dev.loc[std_dev.stock_id == r['stock_id'] and std_dev.time_id == r['time_id'], 'sd']
+    df['log_return'] = df.apply(sd, axis=1)
+    return df, std_dev
 
 def build_train(book_file, trade_file):
     """Build train dataset of a single stock (parallel)"""

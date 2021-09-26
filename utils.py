@@ -3,7 +3,7 @@
 from sklearn.metrics import r2_score
 from sklearn.preprocessing import LabelEncoder
 import numpy as np
-import pandas as pd
+import jax.numpy as jnp
 
 le = LabelEncoder()
 
@@ -14,4 +14,4 @@ def log_return(list_stock_prices):
     return np.log(list_stock_prices).diff() 
 
 def realized_volatility(series_log_return):
-    return np.sqrt(np.sum(series_log_return**2))
+    return jnp.sqrt(jnp.sum(series_log_return**2))
