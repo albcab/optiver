@@ -7,9 +7,7 @@ from jax import vmap
 
 from .utils import log_return, realized_volatility
 
-unique_times = np.load('./unique_times.npy')
-
-def build_log_return(book_file, tot_sec=600):
+def build_log_return(book_file, unique_times, tot_sec=600):
     """Build train for Gaussian processes on log returns"""
     stock_id = book_file.split("=")[1]
     book = pd.read_parquet(book_file)
