@@ -42,21 +42,6 @@ def build_log_return(book_file, unique_times, tot_sec=600):
 
     return book, time_array
 
-# def build_time_array(df, unique_times, stock_id, sd):
-#     """Build array with dimension (time_ids, seconds_in_bucket)"""
-#     def _build_array(time_id):
-#         return (df.loc[(df.time_id == time_id) * (df.stock_id == stock_id), 'seconds in bucket']
-#                 ) / sd.loc[(sd.time_id == time_id) * (sd.stock_id == stock_id), 'sd'] 
-#     return vmap(_build_array)(unique_times)
-
-# def preprocess_log_return(df):
-#     """Transform log returns so that each stock on each time has sd of 1, output original sd for prediction"""
-#     std_dev = df.groupby(['stock_id', 'time_id'])['log_return'].std().reset_index()
-#     std_dev = std_dev.rename(columns={'log_return': 'sd'})
-#     sd = lambda r: r['log_return'] / std_dev.loc[std_dev.stock_id == r['stock_id'] and std_dev.time_id == r['time_id'], 'sd']
-#     df['log_return'] = df.apply(sd, axis=1)
-#     return df, std_dev
-
 def build_train(book_file, trade_file):
     """Build train dataset of a single stock (parallel)"""
     stock_id = book_file.split("=")[1]

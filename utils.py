@@ -13,6 +13,6 @@ def rmspe(y_true, y_pred):
 def log_return(list_stock_prices):
     return np.log(list_stock_prices).diff() 
 
-### data.buil_train won't work with jnp but will with np!!!
+### data.build_train won't work with jnp but will with np!!!
 def realized_volatility(series_log_return):
-    return jnp.sqrt(jnp.sum(series_log_return**2))
+    return np.sqrt(np.sum(series_log_return**2))

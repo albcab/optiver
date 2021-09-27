@@ -135,7 +135,8 @@ def hierarch_guide(T, y):
         'svar', 
         dist.TransformedDistribution(
             dist.Normal(numpyro.param('msvar', 0.),
-                        numpyro.param('ssvar', 1., constraint=dist.constraints.positive))
+                        numpyro.param('ssvar', 1., constraint=dist.constraints.positive)),
+            dist.transforms.ExpTransform()
         )
     )
 
@@ -148,7 +149,8 @@ def hierarch_guide(T, y):
         'slength', 
         dist.TransformedDistribution(
             dist.Normal(numpyro.param('mslength', 0.),
-                        numpyro.param('sslength', 1., constraint=dist.constraints.positive))
+                        numpyro.param('sslength', 1., constraint=dist.constraints.positive)),
+            dist.transforms.ExpTransform()
         )
     )
 
@@ -161,7 +163,8 @@ def hierarch_guide(T, y):
         'snoise', 
         dist.TransformedDistribution(
             dist.Normal(numpyro.param('msnoise', 0.),
-                        numpyro.param('ssnoise', 1., constraint=dist.constraints.positive))
+                        numpyro.param('ssnoise', 1., constraint=dist.constraints.positive)),
+            dist.transforms.ExpTransform()
         )
     )
 
