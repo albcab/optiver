@@ -3,7 +3,7 @@
 import pandas as pd
 import numpy as np
 
-from jax import vmap
+from itertools import combinations
 
 from .utils import log_return, realized_volatility
 
@@ -57,28 +57,54 @@ def build_train(book_file, trade_file):
     book['log_return1'] = book.groupby(['time_id'])['wap1'].apply(log_return)
     book['log_return2'] = book.groupby(['time_id'])['wap2'].apply(log_return)
     book = book[~book['log_return1'].isnull()]
-    train = pd.DataFrame(book.groupby(['time_id'])[['log_return1', 'log_return2']].agg(realized_volatility)).reset_index()
+
+    book['price_spread'] = (book['ask_price1'] - book['bid_price1']) / ((book['ask_price1'] + book['bid_price1']) / 2)
+    book['price_spread2'] = (book['ask_price2'] - book['bid_price2']) / ((book['ask_price2'] + book['bid_price2']) / 2)
+    book["bid_ask_spread"] = abs((book['bid_price1'] - book['bid_price2']) - (book['ask_price1'] - book['ask_price2']))
+    book['total_volume'] = (book['ask_size1'] + book['ask_size2']) + (book['bid_size1'] + book['bid_size2'])
+    book['volume_imbalance'] = abs((book['ask_size1'] + book['ask_size2']) - (book['bid_size1'] + book['bid_size2']))
+
+    aggregator = {'log_return1': [realized_volatility],
+                  'log_return2': [realized_volatility],
+                  'price_spread': [np.mean],
+                  'price_spread2': [np.mean],
+                  'bid_ask_spread': [np.mean],
+                  'total_volume': [np.mean],
+                  'volume_imbalance': [np.mean]}
+
+    train = pd.DataFrame(book.groupby(['time_id']).agg(aggregator)).reset_index()
     
     # then the trade
     trade['log_return'] = trade.groupby(['time_id'])['price'].apply(log_return)
     trade = trade[~trade['log_return'].isnull()]
-    train = train.merge(pd.DataFrame(trade.groupby(['time_id'])['log_return'].agg(realized_volatility)).reset_index(),
+
+    aggregator = {
+        'log_return': [realized_volatility],
+        'seconds_in_bucket': [lambda x: len(x.unique())],
+        'size': [np.mean],
+        'order_count': [np.mean],
+    }
+
+    train = train.merge(pd.DataFrame(trade.groupby(['time_id']).agg(aggregator)).reset_index(),
                        how='left', on='time_id')
     
-    train = train.rename(columns={'log_return1': 'vol1',
-                                  'log_return2': 'vol2',
-                                  'log_return': 'volt'})
     train['stock_id'] = int(stock_id)
     return train
 
 def preprocess(df_train, logX=True, shiftX=True, scaleX=True, logy=True, shifty=True, scaley=True):
     #some times at certain stocks don't have observations in trade, remove
-    df_train_ = df_train[~np.isnan(df_train['volt'])]
+    col = df_train.columns
+    df_train_ = df_train[~np.isnan(df_train[col[10]])]
 
     if logX:
-        df_train_.loc[df_train_['volt'].values == 0, 'volt'] = 1e-3
-        X = np.log(df_train_[['vol1', 'vol2', 'volt']].values)
-        # X = np.log(df_train_[['vol1', 'vol2']].values)
+        # df_train_.loc[df_train_[col[10]] == 0, col[10]] = 1e-3
+        X = df_train_[col[3:]].values
+        X[X == 0] = 1e-3
+        X = np.concatenate([X , X**2], axis=1)
+        all_pairs = list(combinations(np.arange(len(col)-3), 2))
+        for pair in all_pairs:
+            X = np.concatenate([X, X[:, pair].prod(axis=1)[:, None]], axis=1)
+        X = np.log(X)
     else:
         X = df_train_[['vol1', 'vol2', 'volt']].values
 

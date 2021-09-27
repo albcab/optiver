@@ -6,26 +6,21 @@ from numpyro.infer.reparam import TransformReparam
 
 import numpy as np
 
-def hcauchy_icdf(u, scale):
-    return scale * np.tan(np.pi * (u - 1/2.))
+import jax.numpy as jnp
 
-def model(stock_id, time_id, X, y=None):
+def hcauchy_icdf(u, scale):
+    return scale * jnp.tan(jnp.pi * (u - 1/2.))
+
+def model(stock_id, X, y=None):
     n_obs, n_reg = X.shape
     n_stock = len(np.unique(stock_id))
-    n_time = len(np.unique(time_id))
 
     plate_obs = numpyro.plate('i', n_obs, dim=-1)
     plate_stock = numpyro.plate('s', n_stock, dim=-2)
     plate_reg = numpyro.plate('j', n_reg, dim=-1)
-    plate_time = numpyro.plate('t', n_time, dim=None)
 
-    # scale_sd = numpyro.sample('ssd', dist.HalfCauchy(1.))
-    u_scale_sd = numpyro.sample('ussd', dist.Uniform())
-    scale_sd = numpyro.deterministic('ssd', hcauchy_icdf(u_scale_sd, 1.))
-    with plate_time:
-        # sd = numpyro.sample('sd', dist.HalfCauchy(scale_sd))
-        u_sd = numpyro.sample('usd', dist.Uniform())
-        sd = numpyro.deterministic('sd', hcauchy_icdf(u_sd, scale_sd))
+    u_sd = numpyro.sample('usd', dist.Uniform())
+    sd = numpyro.deterministic('sd', hcauchy_icdf(u_sd, 1.))
 
     # scale_tau = numpyro.sample('stau', dist.HalfCauchy(1.))
     u_scale_tau = numpyro.sample('ustau', dist.Uniform())
@@ -55,6 +50,6 @@ def model(stock_id, time_id, X, y=None):
     with plate_obs:
         numpyro.sample(
             'obs',
-            dist.Normal(np.sum(X * beta[stock_id], axis=1), sd[time_id]**2),
+            dist.Normal(np.sum(X * beta[stock_id, :], axis=1), sd**2),
             obs=y
         )
