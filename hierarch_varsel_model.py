@@ -19,16 +19,18 @@ def model(stock_id, X, y=None):
     plate_stock = numpyro.plate('s', n_stock, dim=-2)
     plate_reg = numpyro.plate('j', n_reg, dim=-1)
 
-    u_sd = numpyro.sample('usd', dist.Uniform())
-    sd = numpyro.deterministic('sd', hcauchy_icdf(u_sd, 1.))
-
     # scale_tau = numpyro.sample('stau', dist.HalfCauchy(1.))
     u_scale_tau = numpyro.sample('ustau', dist.Uniform())
     scale_tau = numpyro.deterministic('stau', hcauchy_icdf(u_scale_tau, 1.))
+    # scale_sd = numpyro.sample('ssd', dist.HalfCauchy(1.))
+    u_scale_sd = numpyro.sample('ussd', dist.Uniform())
+    scale_sd = numpyro.deterministic('ssd', hcauchy_icdf(u_scale_sd, 1.))
     with plate_stock:
         # tau = numpyro.sample('tau', dist.HalfCauchy(scale_tau))
         u_tau = numpyro.sample('utau', dist.Uniform())
         tau = numpyro.deterministic('tau', hcauchy_icdf(u_tau, scale_tau))
+        u_sd = numpyro.sample('usd', dist.Uniform())
+        sd = numpyro.deterministic('sd', hcauchy_icdf(u_sd, scale_sd))
 
     with plate_reg:
         # scale_lamda = numpyro.sample('slamda', dist.HalfCauchy(1.))
@@ -50,6 +52,6 @@ def model(stock_id, X, y=None):
     with plate_obs:
         numpyro.sample(
             'obs',
-            dist.Normal(np.sum(X * beta[stock_id, :], axis=1), sd**2),
+            dist.Normal(np.sum(X * beta[stock_id], axis=1), sd[stock_id]**2),
             obs=y
         )
